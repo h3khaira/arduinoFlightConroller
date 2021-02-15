@@ -2,13 +2,14 @@
 #include <Wire.h>
 #include <math.h>
 
-int gyro_address = 0x68;  //address for MPU-6050 in hexadecimal
+int gyro_address = 0x68;                           //address for MPU-6050 in hexadecimal
 float raw_gyro_roll, raw_gyro_pitch, raw_gyro_yaw; //raw values from the gyro
 float x_acc, y_acc, z_acc;
-float roll_cal=-1270, pitch_cal=210, yaw_cal=52, x_acc_cal=-2140, y_acc_cal=125, z_acc_cal=210; //offsets
-float angle_roll, angle_pitch, angle_yaw; //adjusted values in deg per sec
+float roll_cal = -1270, pitch_cal = 210, yaw_cal = 52, x_acc_cal = -2140, y_acc_cal = 125, z_acc_cal = 210; //offsets
+float angle_roll, angle_pitch, angle_yaw;                                                                   //adjusted values in deg per sec
 int temperature;
 float acc_magnitude, acc_pitch, acc_roll;
+float filter_weight = 0.98;
 
 void euler_angles()
 {
@@ -24,21 +25,29 @@ void read_gyro_signals()
   Wire.write(0x3B); //First register of the accelerometer
   Wire.endTransmission();
   Wire.requestFrom(gyro_address, 14); //request 14 byes of information. the gyro will send 14 registers containing measurements from register 0x3Bonwards
-  while (Wire.available() < 14); //stays on this line until 14 bytes are available
-    x_acc = Wire.read() << 8 | Wire.read();
-    x_acc -= x_acc_cal;
-    y_acc = Wire.read() << 8 | Wire.read();
-    y_acc -= y_acc_cal;
-    z_acc = Wire.read() << 8 | Wire.read();
-    z_acc -= z_acc_cal;
-    euler_angles();
-    temperature = Wire.read() << 8 | Wire.read();
-    raw_gyro_roll = Wire.read() << 8 | Wire.read(); //the first two registered contain the roll measurements in the form of 8 bits each
-    raw_gyro_roll -= roll_cal;
-    raw_gyro_pitch = Wire.read() << 8 | Wire.read();
-    raw_gyro_pitch -= pitch_cal;
-    raw_gyro_yaw = Wire.read() << 8 | Wire.read();
-    raw_gyro_yaw -= yaw_cal;
+  while (Wire.available() < 14)
+    ; //stays on this line until 14 bytes are available
+  x_acc = Wire.read() << 8 | Wire.read();
+  x_acc -= x_acc_cal;
+  y_acc = Wire.read() << 8 | Wire.read();
+  y_acc -= y_acc_cal;
+  z_acc = Wire.read() << 8 | Wire.read();
+  z_acc -= z_acc_cal;
+  euler_angles();
+  temperature = Wire.read() << 8 | Wire.read();
+  raw_gyro_roll = Wire.read() << 8 | Wire.read(); //the first two registered contain the roll measurements in the form of 8 bits each
+  raw_gyro_roll -= roll_cal;
+  raw_gyro_pitch = Wire.read() << 8 | Wire.read();
+  raw_gyro_pitch -= pitch_cal;
+  raw_gyro_yaw = Wire.read() << 8 | Wire.read();
+  raw_gyro_yaw -= yaw_cal;
+
+  angle_pitch -= angle_roll * sin(raw_gyro_yaw * 0.000001066); //transferring roll to pitch when quad rotates on yaw axis
+  angle_roll += angle_pitch * sin(raw_gyro_yaw * 0.000001066);
+
+  //complementary filter to account for drift in sensors
+  angle_pitch += (filter_weight * (raw_gyro_pitch * 0.0000611) + (1 - filter_weight) * acc_pitch);
+  angle_roll += (filter_weight * (raw_gyro_roll * 0.0000611) + (1 - filter_weight) * acc_roll);
 }
 
 void start_gyro()

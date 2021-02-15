@@ -6,6 +6,7 @@ extern float roll_cal, pitch_cal, yaw_cal, x_acc_cal, y_acc_cal, z_acc_cal;
 extern float angle_roll, angle_pitch, angle_yaw; //adjusted values in deg per sec
 extern int temperature;
 extern float acc_magnitude, acc_pitch, acc_roll;
+extern float filter_weight;
 
 void read_gyro_signals();
 void start_gyro();
