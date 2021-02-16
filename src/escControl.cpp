@@ -5,7 +5,8 @@
 byte last_throttle, last_yaw, last_pitch, last_roll;
 int receiver_input_throttle, receiver_input_yaw, receiver_input_pitch, receiver_input_roll;;
 volatile int converted_throttle;
-unsigned long timer_throttle, timer_yaw, timer_pitch, timer_roll, current_time, zero_timer, esc_loop_timer, pulse_timer;
+unsigned long timer_throttle, timer_yaw, timer_pitch, timer_roll, current_time, zero_timer, esc_loop_timer;
+unsigned long pulse_timer_1, pulse_timer_2, pulse_timer_3, pulse_timer_4; 
 int throttle_pulse_length;
 int start = 0;
 
@@ -31,13 +32,21 @@ int convert_throttle() {
 void esc_pulse_output() {
   zero_timer = micros();
   PORTD |= B11110000; // Set arduino pins 4,5,6,7 high sending signal to ESCs
-  pulse_timer = throttle_pulse_length + zero_timer;
-  //B00001000
-  //B00000100
-  //B00000010
-  //B00000001
-  while (PORTD >= 16) { //THIS LOOP RUNS WHILE ALL 4 OF THE LEDs ARE LOW
+  //B00010000 BOTTOM LEFT
+  //B00100000 TOP LEFT
+  //B01000000 TOP RIGHT
+  //B10000000 BOTTOM RIGHT
+  pulse_timer_1 = throttle_pulse_length + zero_timer;
+  pulse_timer_2 = throttle_pulse_length + zero_timer;
+  pulse_timer_3 = throttle_pulse_length + zero_timer;
+  pulse_timer_4 = throttle_pulse_length + zero_timer;
+  
+  while (PORTD >= 16) { //THIS LOOP RUNS WHILE ANY OF 4 ESCs ARE HIGH
     esc_loop_timer = micros();
-    if (pulse_timer <= esc_loop_timer)PORTD &= B00001111; //sending low signals to all 4 ESCs
+    if (pulse_timer_1 <= esc_loop_timer)PORTD &= B00100000; //sending low signal to ESC 1
+    if (pulse_timer_2 <= esc_loop_timer)PORTD &= B01000000; //sending low signals to ESC 2
+    if (pulse_timer_3 <= esc_loop_timer)PORTD &= B00010000; //sending low signals to ESC 2 
+    if (pulse_timer_4 <= esc_loop_timer)PORTD &= B10000000; //sending low signals to ESC 2
   }
 }
+
