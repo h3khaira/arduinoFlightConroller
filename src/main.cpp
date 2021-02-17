@@ -36,7 +36,14 @@ void loop()
   //motor control
   throttle_pulse_length = convert_throttle();
   esc_pulse_output();
-  read_gyro_signals(); 
+  euler_angles();
+  angle_pitch -= angle_roll * sin(raw_gyro_yaw * 0.000001066); //transferring roll to pitch when quad rotates on yaw axis
+  angle_roll += angle_pitch * sin(raw_gyro_yaw * 0.000001066);
+
+  //complementary filter to account for drift in sensors
+  angle_pitch += (filter_weight * (raw_gyro_pitch * 0.0000611) + (1 - filter_weight) * acc_pitch);
+  angle_roll += (filter_weight * (raw_gyro_roll * 0.0000611) + (1 - filter_weight) * acc_roll);
+  get_pid_inputs();
   //Uncomment to read offsets
   /*
   Serial.print("Pitch is ");
@@ -59,13 +66,15 @@ void loop()
   Serial.print(" Pitch angle ");
   Serial.println(acc_pitch);
   */
+ /*
   Serial.print ("Yaw: ");
-  Serial.print(receiver_input_yaw);
+  Serial.print(user_input_yaw);
   Serial.print (" Pitch: ");
-  Serial.print(receiver_input_pitch);
+  Serial.print(user_input_pitch);
   Serial.print (" Roll: ");
-  Serial.println(receiver_input_roll);
-
+  Serial.println(user_input_roll);
+  */
+  Serial.println(pid_pitch_input);
 }
 
 //Receiver interrupt
@@ -80,7 +89,7 @@ ISR(PCINT0_vect){
   }
   else if (last_yaw == 1){
     last_yaw=0;
-    receiver_input_yaw = current_time - timer_yaw; //receiver input is the length of pulse in microseconds
+    user_input_yaw = current_time - timer_yaw; //receiver input is the length of pulse in microseconds
   }
   //Throttle
   if (PINB & B00000010){
@@ -91,7 +100,7 @@ ISR(PCINT0_vect){
   }
   else if (last_throttle == 1){
     last_throttle=0;
-    receiver_input_throttle = current_time - timer_throttle;
+    user_input_throttle = current_time - timer_throttle;
   }
   //Pitch
    if (PINB & B00000100){
@@ -102,7 +111,7 @@ ISR(PCINT0_vect){
   }
   else if (last_pitch == 1){
     last_pitch=0;
-    receiver_input_pitch = current_time - timer_pitch;
+    user_input_pitch = current_time - timer_pitch;
   }
   //Roll
     if (PINB & B00001000){
@@ -113,6 +122,6 @@ ISR(PCINT0_vect){
   }
   else if (last_roll == 1){
     last_roll=0;
-    receiver_input_roll = current_time - timer_roll;
+    user_input_roll = current_time - timer_roll;
   }
 }

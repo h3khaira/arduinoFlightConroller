@@ -33,7 +33,6 @@ void read_gyro_signals()
   y_acc -= y_acc_cal;
   z_acc = Wire.read() << 8 | Wire.read();
   z_acc -= z_acc_cal;
-  euler_angles();
   temperature = Wire.read() << 8 | Wire.read();
   raw_gyro_roll = Wire.read() << 8 | Wire.read(); //the first two registered contain the roll measurements in the form of 8 bits each
   raw_gyro_roll -= roll_cal;
@@ -41,13 +40,7 @@ void read_gyro_signals()
   raw_gyro_pitch -= pitch_cal;
   raw_gyro_yaw = Wire.read() << 8 | Wire.read();
   raw_gyro_yaw -= yaw_cal;
-
-  angle_pitch -= angle_roll * sin(raw_gyro_yaw * 0.000001066); //transferring roll to pitch when quad rotates on yaw axis
-  angle_roll += angle_pitch * sin(raw_gyro_yaw * 0.000001066);
-
-  //complementary filter to account for drift in sensors
-  angle_pitch += (filter_weight * (raw_gyro_pitch * 0.0000611) + (1 - filter_weight) * acc_pitch);
-  angle_roll += (filter_weight * (raw_gyro_roll * 0.0000611) + (1 - filter_weight) * acc_roll);
+ 
 }
 
 void start_gyro()

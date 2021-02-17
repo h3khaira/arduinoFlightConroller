@@ -10,3 +10,4 @@ extern float filter_weight;
 
 void read_gyro_signals();
 void start_gyro();
+void euler_angles();
