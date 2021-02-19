@@ -74,7 +74,12 @@ void loop()
   Serial.print (" Roll: ");
   Serial.println(user_input_roll);
   */
-  Serial.println(pid_pitch_input);
+ 
+  Serial.print("Pitch Input: ");
+  Serial.print(pid_pitch_input);
+  Serial.print(" Roll Input: ");
+  Serial.println(pid_roll_input);
+  
 }
 
 //Receiver interrupt

@@ -7,6 +7,7 @@ extern unsigned long pulse_timer_1, pulse_timer_2, pulse_timer_3, pulse_timer_4;
 extern int throttle_pulse_length;
 extern int start;
 extern float pid_roll_input, pid_yaw_input, pid_pitch_input;
+extern float last_angle_roll, last_angle_pitch, add_angle_roll, add_angle_pitch;
 
 
 

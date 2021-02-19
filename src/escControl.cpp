@@ -11,7 +11,8 @@ unsigned long pulse_timer_1, pulse_timer_2, pulse_timer_3, pulse_timer_4;
 int throttle_pulse_length;
 int start = 0;
 float pid_roll_input, pid_yaw_input, pid_pitch_input;
-float p_gain = 0.2, d_gain = 0.01, i_gain = 0.1;
+float p_gain = 0.2, d_gain = 0.01, i_gain = 0;
+float last_angle_roll, last_angle_pitch, add_angle_roll, add_angle_pitch;
 
 int convert_throttle()
 {
@@ -77,6 +78,10 @@ void esc_pulse_output()
 }
 
 void get_pid_inputs(){
-  pid_pitch_input = p_gain*angle_pitch;
-  pid_roll_input = p_gain*angle_roll;
+  pid_pitch_input = p_gain*angle_pitch + d_gain*(angle_pitch-last_angle_pitch) + i_gain*add_angle_pitch;
+  pid_roll_input = p_gain*angle_roll + d_gain*(angle_roll-last_angle_roll)+ i_gain*add_angle_roll;
+  last_angle_roll = angle_roll;
+  last_angle_pitch = angle_pitch;
+  add_angle_roll += angle_roll;
+  add_angle_pitch += angle_pitch;
 }
